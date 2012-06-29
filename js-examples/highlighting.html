@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Highlighting Search Demo</title>
+	    <link href="http://cdn22.7static.com/s/corecss/1129665605/" rel="stylesheet" />
+		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.8.19.custom.min.js"></script>
+		<style>
+			em { font-weight:bold; background-color:yellow;}
+		</style>
+		<script type="text/javascript">
+		    $(function () {
+
+		        $("#row").autocomplete({
+		            source: function (request, response) {
+		                $.ajaxSetup({ scriptCharset: "utf-8", contentType: "application/json; charset=utf-8" });
+		                $.ajax({
+		                    url: "http://localhost:8080/solr/enron/select/?fl=*,score&wt=json&json.wrf=?",
+		                    dataType: "jsonp",
+							data: {
+		                        q: request.term,
+								hl: true,
+								"hl.fl":"text",
+								"hl.fragmenter":"regex",
+								"hl.formatter":"html",
+		                        rows: 10
+		                    },
+		                    accept: "application/json; charset=utf-8",
+		                    contentType: "application/json; charset=utf-8",
+		                    success: function (data) {
+										                        
+								response($.map(data.response.docs, function (doc) {
+		                            return {
+										id: doc.id,
+		                                subject: doc.subject,
+		                                date: doc.date,
+										sender: doc.sender,
+		                                body: doc.body,
+		                                score: doc.score,
+		                                qtime: data.response.qtime,
+										highlight: data.highlighting[doc.id].text,
+										term: request.term
+		                            };
+		                        }));
+		                    }
+		                });
+		            },
+		            minLength: 3,
+		            delay: 0,
+		            select: function () {
+		                return false;
+		            },
+		            focus: function () {
+		                return false;
+		            },
+		            open: function () {
+		                return false;
+		            },
+		            change: function () {
+		                return false;
+		            },
+		            close: function () {
+		                return false;
+		            }
+		        }).data("autocomplete")._renderItem = function (ul, item) {
+		            return $("<li></li>").data("item.autocomplete", item)
+    		            .append(FormatRow(item))
+    		            .appendTo(ul);
+		        };
+		    });
+			
+			function FormatRow(doc){			
+				var body = doc.body+"";
+				body = body.replace(doc.term, "<em>"+doc.term+"</em>");
+				
+				return "<table>"+				
+				"<tbody><tr>"+						
+						"<td width=\"50%\">"+
+							"<span class=\"search-result\">"+
+								"<a class=\"title focus-text\">"+doc.subject+"</a> "+
+								"<span >&nbsp;"+doc.date+"</span>"+
+							"</span>"+
+
+						"	<span class=\"small\">by"+
+						"		<a class=\"artist\">"+doc.sender+"</a>"+
+						"	</span> "+
+						"</td>"+
+						"<td class=\"trackreleasedate\">"+doc.highlight+"</td>"+
+						"<td class=\"trackrating\">" + doc.score + "</td>" +
+                        "</tr><tr><td>&nbsp;</td><td colspan=\"2\">"+ body +"</td></tr></table>";
+			}
+		</script>
+		<style type="text/css">
+			body {padding:20px}
+		</style>
+	</head>
+	<body>
+		<div style="width:500px">
+			<div class="ui-widget">
+				<input id="row" class="focus-text" type="search"/>
+			</div>
+		</div>
+		<div id="output"></div>
+	</body>
+</html>
+
+

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Highlighting Search Demo</title>
+		<link href="http://cdn22.7static.com/s/corecss/1129665605/" rel="stylesheet" />
+		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.8.19.custom.min.js"></script>
+		<style>
+			li { padding:2px;font-family:arial; font-size:16px; width:500px }
+			em.count { float:right}
+		</style>
+		<script type="text/javascript">
+		    $(function () {
+
+		        $("#row").autocomplete({
+		            source: function (request, response) {
+						var term = request.term+"";
+						var loweredterm = term.toLowerCase();
+					
+		                $.ajaxSetup({ scriptCharset: "utf-8", contentType: "application/json; charset=utf-8" });
+		                $.ajax({
+		                    url: "http://localhost:8080/solr/enron/select/?fl=*,score&wt=json&json.wrf=?",
+		                    dataType: "jsonp",
+							data: {
+								q:"*:*",
+								"facet.field":"sender",
+								"facet.prefix": loweredterm, 
+								facet: true,
+								"facet.mincount":20,
+								"facet.sort":"count",
+		                        rows: 0								
+		                    },
+		                    accept: "application/json; charset=utf-8",
+		                    contentType: "application/json; charset=utf-8",
+		                    success: function (data) {										                        
+								response($.map(data.facet_counts.facet_fields, function (doc) {
+		                            return {
+										sender: doc,
+										term: loweredterm
+		                            };
+		                        }));
+		                    }
+		                });
+		            },
+		            minLength: 2,
+		            delay: 0,
+		            select: function () {
+		                return false;
+		            },
+		            focus: function () {
+		                return false;
+		            },
+		            open: function () {
+		                return false;
+		            },
+		            change: function () {
+		                return false;
+		            },
+		            close: function () {
+		                return false;
+		            }
+		        }).data("autocomplete")._renderItem = function (ul, item) {
+		            return $("<li></li>").data("item.autocomplete", item)
+    		            .append(FormatRow(item))
+    		            .appendTo(ul);
+		        };
+		    });
+			
+			function FormatRow(doc){		
+				var output = "";
+				for(i=0; i< doc.sender.length; i+=2) {
+					output += "<li>";
+					
+					var sender = doc.sender[i]+"";
+					sender = sender.replace(doc.term, "<strong>"+doc.term+"</strong>")					
+					output += sender + " <em class=\"count\">" +doc.sender[(i+1)]+"</em>";
+					output += "</li>";
+				}
+				return output;
+			}
+		</script>
+		<style type="text/css">
+			body {padding:20px}
+		</style>
+	</head>
+	<body>
+		<div style="width:500px">
+			<div class="ui-widget">
+				<input id="row" class="focus-text" type="search"/>
+			</div>
+		</div>
+		<div id="output"></div>
+	</body>
+</html>
+
+

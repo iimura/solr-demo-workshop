@@ -1,0 +1,12 @@
+<dataConfig>
+    <dataSource type="JdbcDataSource" name="enron" driver="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost:3306/enron" batchSize="-1" user="root" password="root"/>
+    <document>
+	<entity name="message" dataSource="enron" query="select message_id, sender, date, subject, body from message">
+            <field column="message_id" name="id" />
+            <field column="sender" name="sender" />
+            <field column="date" name="date" />
+            <field column="subject" name="subject" />
+            <field column="body" name="body" />
+	</entity>
+    </document>
+</dataConfig>
